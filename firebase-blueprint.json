@@ -1,0 +1,193 @@
+{
+  "entities": {
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized administrator registry record.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["admin"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Private authenticated user account profile.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "createdAt", "updatedAt"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "Public portfolio owner profile and business contact information.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "professionalTitle": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "headline": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "supportingDescription": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "specialtyLine": { "type": "string", "maxLength": 240 },
+        "location": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "experience": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "biography": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "profileImageUrl": { "type": "string", "maxLength": 950000 },
+        "aboutImageUrl": { "type": "string", "maxLength": 950000 },
+        "email": { "type": "string", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 60 },
+        "whatsapp": { "type": "string", "maxLength": 200 },
+        "linkedin": { "type": "string", "maxLength": 400 },
+        "behance": { "type": "string", "maxLength": 400 },
+        "showEmail": { "type": "boolean" },
+        "showWhatsapp": { "type": "boolean" },
+        "showLinkedin": { "type": "boolean" },
+        "showBehance": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "professionalTitle", "headline", "supportingDescription", "location", "experience", "biography", "updatedAt"]
+    },
+    "Experience": {
+      "title": "Experience",
+      "description": "Career history entry displayed in the professional timeline.",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "position": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "location": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "startDate": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "endDate": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "responsibilities": { "type": "array", "description": "Max 20 responsibility items" },
+        "displayOrder": { "type": "number" },
+        "isVisible": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyName", "position", "location", "startDate", "endDate", "responsibilities", "displayOrder", "isVisible", "updatedAt"]
+    },
+    "Skill": {
+      "title": "Skill",
+      "description": "Core professional skill organized by discipline category.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "category": { "type": "string", "enum": ["Graphic Design", "Printing Technology", "Print Production", "3D Design"], "maxLength": 60 },
+        "icon": { "type": "string", "maxLength": 60 },
+        "displayOrder": { "type": "number" },
+        "isVisible": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "displayOrder", "isVisible", "updatedAt"]
+    },
+    "Software": {
+      "title": "Software",
+      "description": "Design and production software tool.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "shortCode": { "type": "string", "maxLength": 10 },
+        "brandColor": { "type": "string", "maxLength": 30 },
+        "iconUrl": { "type": "string", "maxLength": 950000 },
+        "displayOrder": { "type": "number" },
+        "isVisible": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "displayOrder", "isVisible", "updatedAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Portfolio project category.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[a-z0-9\\-]+$" },
+        "displayOrder": { "type": "number" },
+        "isVisible": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "slug", "displayOrder", "isVisible", "updatedAt"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Portfolio design or production project.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "categoryId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "categoryName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "coverImageUrl": { "type": "string", "maxLength": 950000 },
+        "galleryImages": { "type": "array", "description": "Max 12 gallery image URLs" },
+        "softwareUsed": { "type": "array", "description": "Max 12 software names" },
+        "printingTechnology": { "type": "string", "maxLength": 240 },
+        "projectDetails": { "type": "string", "maxLength": 2000 },
+        "completionDate": { "type": "string", "maxLength": 60 },
+        "published": { "type": "boolean" },
+        "displayOrder": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "categoryId", "categoryName", "description", "galleryImages", "softwareUsed", "published", "displayOrder", "createdAt", "updatedAt"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Website SEO, CV download, and footer configuration.",
+      "type": "object",
+      "properties": {
+        "websiteTitle": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "metaDescription": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "cvUrl": { "type": "string", "maxLength": 950000 },
+        "cvFileName": { "type": "string", "maxLength": 240 },
+        "coverLetterUrl": { "type": "string", "maxLength": 950000 },
+        "coverLetterFileName": { "type": "string", "maxLength": 240 },
+        "socialImageUrl": { "type": "string", "maxLength": 950000 },
+        "footerText": { "type": "string", "maxLength": 300 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["websiteTitle", "metaDescription", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authorized administrator accounts."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Private authenticated user accounts."
+    },
+    "/profile/{profileId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "Public portfolio owner profile."
+    },
+    "/experiences/{experienceId}": {
+      "schema": { "$ref": "#/entities/Experience" },
+      "description": "Career timeline entries."
+    },
+    "/skills/{skillId}": {
+      "schema": { "$ref": "#/entities/Skill" },
+      "description": "Categorized design and production skills."
+    },
+    "/software/{softwareId}": {
+      "schema": { "$ref": "#/entities/Software" },
+      "description": "Software tools and expertise."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Portfolio project categories."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Portfolio projects with publication visibility."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Site-wide SEO, CV, and footer settings."
+    }
+  }
+}

@@ -1,0 +1,67 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email_verified == true && (
+          request.auth.token.email == 'alaminshakil56922@gmail.com' ||
+          request.auth.token.email == 'imonhossain56922@gmail.com'
+        );
+    }
+
+    function isValidImage() {
+      return request.resource != null &&
+        request.resource.size <= 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(jpeg|png|webp|gif|svg\\+xml)');
+    }
+
+    function isValidPdf() {
+      return request.resource != null &&
+        request.resource.size <= 10 * 1024 * 1024 &&
+        request.resource.contentType == 'application/pdf';
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Profile photographs
+    match /profile/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+
+    // Portfolio project cover and gallery images
+    match /projects/{projectId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+
+    // Software icons and general website assets
+    match /software/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+
+    match /assets/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+
+    // Public CV PDF
+    match /cv/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidPdf();
+      allow delete: if isAdmin();
+    }
+  }
+}

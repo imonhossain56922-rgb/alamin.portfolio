@@ -1,0 +1,298 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Primitives ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedAdminEmail() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'alaminshakil56922@gmail.com' ||
+        request.auth.token.email == 'imonhossain56922@gmail.com'
+      );
+    }
+
+    function isAdmin() {
+      return isVerifiedAdminEmail() || (
+        isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isValidOptionalBool(data, field) {
+      return !(field in data) || (data[field] is bool);
+    }
+
+    function isValidStringList(arr, maxItems, maxItemLen) {
+      return arr is list && arr.size() <= maxItems && (
+        arr.size() == 0 || (arr[0] is string && arr[0].size() <= maxItemLen)
+      );
+    }
+
+    // --- Validation Blueprints ---
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'role', 'createdAt']) &&
+        isValidId(data.uid) &&
+        isValidString(data.email, 3, 200) &&
+        data.role == 'admin' &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'createdAt', 'updatedAt']) &&
+        data.uid == userId &&
+        isValidId(data.uid) &&
+        isValidString(data.email, 3, 200) &&
+        isValidString(data.displayName, 1, 120) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['fullName', 'professionalTitle', 'headline', 'supportingDescription', 'location', 'experience', 'biography', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'fullName', 'professionalTitle', 'headline', 'supportingDescription',
+          'specialtyLine', 'location', 'experience', 'biography', 'profileImageUrl',
+          'aboutImageUrl', 'email', 'phone', 'whatsapp', 'linkedin', 'behance',
+          'showEmail', 'showWhatsapp', 'showLinkedin', 'showBehance', 'updatedAt'
+        ]) &&
+        isValidString(data.fullName, 1, 120) &&
+        isValidString(data.professionalTitle, 1, 160) &&
+        isValidString(data.headline, 1, 240) &&
+        isValidString(data.supportingDescription, 1, 600) &&
+        isValidOptionalString(data, 'specialtyLine', 240) &&
+        isValidString(data.location, 1, 160) &&
+        isValidString(data.experience, 1, 120) &&
+        isValidString(data.biography, 1, 4000) &&
+        isValidOptionalString(data, 'profileImageUrl', 950000) &&
+        isValidOptionalString(data, 'aboutImageUrl', 950000) &&
+        isValidOptionalString(data, 'email', 200) &&
+        isValidOptionalString(data, 'phone', 60) &&
+        isValidOptionalString(data, 'whatsapp', 200) &&
+        isValidOptionalString(data, 'linkedin', 400) &&
+        isValidOptionalString(data, 'behance', 400) &&
+        isValidOptionalBool(data, 'showEmail') &&
+        isValidOptionalBool(data, 'showWhatsapp') &&
+        isValidOptionalBool(data, 'showLinkedin') &&
+        isValidOptionalBool(data, 'showBehance') &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidExperience(data) {
+      return data.keys().hasAll(['companyName', 'position', 'location', 'startDate', 'endDate', 'responsibilities', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        data.keys().hasOnly(['companyName', 'position', 'location', 'startDate', 'endDate', 'responsibilities', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        isValidString(data.companyName, 1, 160) &&
+        isValidString(data.position, 1, 160) &&
+        isValidString(data.location, 1, 160) &&
+        isValidString(data.startDate, 1, 40) &&
+        isValidString(data.endDate, 1, 40) &&
+        isValidStringList(data.responsibilities, 20, 400) &&
+        data.displayOrder is number &&
+        data.isVisible is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSkill(data) {
+      return data.keys().hasAll(['name', 'category', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'category', 'icon', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        isValidString(data.name, 1, 140) &&
+        data.category in ['Graphic Design', 'Printing Technology', 'Print Production', '3D Design'] &&
+        isValidOptionalString(data, 'icon', 60) &&
+        data.displayOrder is number &&
+        data.isVisible is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSoftware(data) {
+      return data.keys().hasAll(['name', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'shortCode', 'brandColor', 'iconUrl', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        isValidString(data.name, 1, 120) &&
+        isValidOptionalString(data, 'shortCode', 10) &&
+        isValidOptionalString(data, 'brandColor', 30) &&
+        isValidOptionalString(data, 'iconUrl', 950000) &&
+        data.displayOrder is number &&
+        data.isVisible is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCategory(data) {
+      return data.keys().hasAll(['name', 'slug', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'slug', 'displayOrder', 'isVisible', 'updatedAt']) &&
+        isValidString(data.name, 1, 120) &&
+        isValidString(data.slug, 1, 120) &&
+        data.slug.matches('^[a-z0-9\\-]+$') &&
+        data.displayOrder is number &&
+        data.isVisible is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['title', 'categoryId', 'categoryName', 'description', 'galleryImages', 'softwareUsed', 'published', 'displayOrder', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'title', 'categoryId', 'categoryName', 'description', 'coverImageUrl',
+          'galleryImages', 'softwareUsed', 'printingTechnology', 'projectDetails',
+          'completionDate', 'published', 'displayOrder', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidString(data.title, 1, 180) &&
+        isValidId(data.categoryId) &&
+        isValidString(data.categoryName, 1, 120) &&
+        isValidString(data.description, 1, 4000) &&
+        isValidOptionalString(data, 'coverImageUrl', 950000) &&
+        isValidStringList(data.galleryImages, 12, 300000) &&
+        isValidStringList(data.softwareUsed, 12, 120) &&
+        isValidOptionalString(data, 'printingTechnology', 240) &&
+        isValidOptionalString(data, 'projectDetails', 2000) &&
+        isValidOptionalString(data, 'completionDate', 60) &&
+        data.published is bool &&
+        data.displayOrder is number &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['websiteTitle', 'metaDescription', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'websiteTitle', 'metaDescription', 'cvUrl', 'cvFileName',
+          'coverLetterUrl', 'coverLetterFileName', 'socialImageUrl', 'footerText', 'updatedAt'
+        ]) &&
+        isValidString(data.websiteTitle, 1, 160) &&
+        isValidString(data.metaDescription, 1, 400) &&
+        isValidOptionalString(data, 'cvUrl', 950000) &&
+        isValidOptionalString(data, 'cvFileName', 240) &&
+        isValidOptionalString(data, 'coverLetterUrl', 950000) &&
+        isValidOptionalString(data, 'coverLetterFileName', 240) &&
+        isValidOptionalString(data, 'socialImageUrl', 950000) &&
+        isValidOptionalString(data, 'footerText', 300) &&
+        data.updatedAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isValidId(userId) && isAdmin() && isValidAdminUser(incoming()) && incoming().uid == userId && incoming().createdAt == request.time;
+      allow update: if isValidId(userId) && isAdmin() && isValidAdminUser(incoming()) && incoming().uid == existing().uid && incoming().createdAt == existing().createdAt && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'role']);
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isValidId(userId) && isVerifiedUser() && isOwner(userId) && isValidUserAccount(incoming(), userId) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) && isVerifiedUser() && (isOwner(userId) || isAdmin()) && isValidUserAccount(incoming(), userId) && incoming().uid == existing().uid && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'updatedAt']);
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    match /profile/{profileId} {
+      allow get: if isValidId(profileId) && (profileId == 'main' || isAdmin());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isValidId(profileId) && isAdmin() && isValidProfile(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isValidId(profileId) && isAdmin() && isValidProfile(incoming()) && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'fullName', 'professionalTitle', 'headline', 'supportingDescription',
+        'specialtyLine', 'location', 'experience', 'biography', 'profileImageUrl',
+        'aboutImageUrl', 'email', 'phone', 'whatsapp', 'linkedin', 'behance',
+        'showEmail', 'showWhatsapp', 'showLinkedin', 'showBehance', 'updatedAt'
+      ]);
+      allow delete: if isValidId(profileId) && isAdmin();
+    }
+
+    match /experiences/{experienceId} {
+      allow get: if isValidId(experienceId) && (existing().isVisible == true || isAdmin());
+      allow list: if existing().isVisible == true || isVerifiedAdminEmail();
+      allow create: if isValidId(experienceId) && isAdmin() && isValidExperience(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isValidId(experienceId) && isAdmin() && isValidExperience(incoming()) && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'companyName', 'position', 'location', 'startDate', 'endDate', 'responsibilities', 'displayOrder', 'isVisible', 'updatedAt'
+      ]);
+      allow delete: if isValidId(experienceId) && isAdmin();
+    }
+
+    match /skills/{skillId} {
+      allow get: if isValidId(skillId) && (existing().isVisible == true || isAdmin());
+      allow list: if existing().isVisible == true || isVerifiedAdminEmail();
+      allow create: if isValidId(skillId) && isAdmin() && isValidSkill(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isValidId(skillId) && isAdmin() && isValidSkill(incoming()) && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'name', 'category', 'icon', 'displayOrder', 'isVisible', 'updatedAt'
+      ]);
+      allow delete: if isValidId(skillId) && isAdmin();
+    }
+
+    match /software/{softwareId} {
+      allow get: if isValidId(softwareId) && (existing().isVisible == true || isAdmin());
+      allow list: if existing().isVisible == true || isVerifiedAdminEmail();
+      allow create: if isValidId(softwareId) && isAdmin() && isValidSoftware(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isValidId(softwareId) && isAdmin() && isValidSoftware(incoming()) && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'name', 'shortCode', 'brandColor', 'iconUrl', 'displayOrder', 'isVisible', 'updatedAt'
+      ]);
+      allow delete: if isValidId(softwareId) && isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow get: if isValidId(categoryId) && (existing().isVisible == true || isAdmin());
+      allow list: if existing().isVisible == true || isVerifiedAdminEmail();
+      allow create: if isValidId(categoryId) && isAdmin() && isValidCategory(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isValidId(categoryId) && isAdmin() && isValidCategory(incoming()) && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'name', 'slug', 'displayOrder', 'isVisible', 'updatedAt'
+      ]);
+      allow delete: if isValidId(categoryId) && isAdmin();
+    }
+
+    match /projects/{projectId} {
+      allow get: if isValidId(projectId) && (existing().published == true || isAdmin());
+      allow list: if existing().published == true || isVerifiedAdminEmail();
+      allow create: if isValidId(projectId) && isAdmin() && isValidProject(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(projectId) && isAdmin() && isValidProject(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'title', 'categoryId', 'categoryName', 'description', 'coverImageUrl',
+        'galleryImages', 'softwareUsed', 'printingTechnology', 'projectDetails',
+        'completionDate', 'published', 'displayOrder', 'updatedAt'
+      ]);
+      allow delete: if isValidId(projectId) && isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && (settingId == 'site' || isAdmin());
+      allow list: if isVerifiedAdminEmail();
+      allow create: if isValidId(settingId) && isAdmin() && isValidSiteSettings(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isValidId(settingId) && isAdmin() && isValidSiteSettings(incoming()) && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly([
+        'websiteTitle', 'metaDescription', 'cvUrl', 'cvFileName',
+        'coverLetterUrl', 'coverLetterFileName', 'socialImageUrl', 'footerText', 'updatedAt'
+      ]);
+      allow delete: if isValidId(settingId) && isAdmin();
+    }
+  }
+}
