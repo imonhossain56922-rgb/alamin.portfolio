@@ -131,19 +131,19 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ profile }) => {
                         href={formatWhatsappHref(profile.whatsapp)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[#202124] bg-[#F7F8FA] hover:bg-[#E5E7EB]/70 border border-[#E5E7EB] rounded-lg transition-colors"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#111B21] bg-[#25D366] hover:bg-[#1EBE5D] rounded-lg transition-colors"
                       >
                         <span>WhatsApp Message</span>
-                        <ExternalLink className="w-4 h-4 text-[#315E9B]" />
+                        <ExternalLink className="w-4 h-4 text-[#111B21]" />
                       </a>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleUnconfigured('WhatsApp')}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-[#202124] bg-[#F7F8FA] hover:bg-[#E5E7EB]/70 border border-[#E5E7EB] rounded-lg transition-colors cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-[#111B21] bg-[#25D366] hover:bg-[#1EBE5D] rounded-lg transition-colors cursor-pointer"
                       >
                         <span>WhatsApp Message</span>
-                        <ExternalLink className="w-4 h-4 text-[#315E9B]" />
+                        <ExternalLink className="w-4 h-4 text-[#111B21]" />
                       </button>
                     )}
                   </div>

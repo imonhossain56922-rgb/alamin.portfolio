@@ -187,6 +187,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <p className="text-xs font-medium text-[#6B7280] mb-1">Previous Tenure</p>
             <p className="text-sm font-semibold text-[#202124]">PRAN-RFL Group (2017–2024)</p>
           </div>
+          <div>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Nationality</p>
+            <p className="text-sm font-semibold text-[#202124]">Bangladesh</p>
+          </div>
         </div>
       </div>
 
@@ -288,7 +292,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Full-Width Key Credentials Strip Below Hero Split */}
-        <div className="mt-14 pt-8 border-t border-[#E5E7EB] grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mt-14 pt-8 border-t border-[#E5E7EB] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1.2fr_1fr_1.35fr_0.75fr] gap-5">
           <div>
             <p className="text-xs font-medium text-[#6B7280] mb-1">Experience</p>
             <p className="text-base font-semibold text-[#202124]">{profile.experience}</p>
@@ -304,6 +308,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div>
             <p className="text-xs font-medium text-[#6B7280] mb-1">Previous Tenure</p>
             <p className="text-base font-semibold text-[#202124]">PRAN-RFL Group (2017–2024)</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Nationality</p>
+            <p className="text-base font-semibold text-[#202124]">Bangladesh</p>
           </div>
         </div>
       </div>

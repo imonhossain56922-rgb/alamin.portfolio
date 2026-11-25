@@ -78,6 +78,7 @@ export interface ProjectItem {
   description: string;
   coverImageUrl: string;
   galleryImages: string[];
+  galleryVideos?: string[];
   softwareUsed: string[];
   printingTechnology: string;
   projectDetails: string;

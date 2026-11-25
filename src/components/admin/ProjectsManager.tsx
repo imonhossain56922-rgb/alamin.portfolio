@@ -5,6 +5,7 @@ import {
   Edit3,
   Eye,
   EyeOff,
+  Link2,
   Plus,
   Trash2,
   X,
@@ -18,6 +19,7 @@ import {
 } from '../../lib/portfolioService';
 import { FileUploader } from './FileUploader';
 import { ProjectPlaceholderVisual } from '../ProjectPlaceholderVisual';
+import { MediaVideo } from '../MediaVideo';
 
 interface ProjectsManagerProps {
   projects: ProjectItem[];
@@ -31,6 +33,7 @@ const emptyForm = (categories: CategoryItem[], nextOrder: number) => ({
   description: '',
   coverImageUrl: '',
   galleryImages: [] as string[],
+  galleryVideos: [] as string[],
   softwareUsedText: 'Adobe Illustrator, Adobe Photoshop',
   printingTechnology: '',
   projectDetails: '',
@@ -46,6 +49,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [form, setForm] = useState(() => emptyForm(categories, projects.length + 1));
+  const [videoUrlInput, setVideoUrlInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [importingStarters, setImportingStarters] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -76,6 +80,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm(categories, projects.length + 1));
+    setVideoUrlInput('');
     setStatusMsg(null);
     setShowEditor(true);
   };
@@ -89,6 +94,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
       description: p.description,
       coverImageUrl: p.coverImageUrl || '',
       galleryImages: p.galleryImages || [],
+      galleryVideos: p.galleryVideos || [],
       softwareUsedText: (p.softwareUsed || []).join(', '),
       printingTechnology: p.printingTechnology || '',
       projectDetails: p.projectDetails || '',
@@ -96,8 +102,27 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
       published: p.published,
       displayOrder: p.displayOrder ?? 1,
     });
+    setVideoUrlInput('');
     setStatusMsg(null);
     setShowEditor(true);
+  };
+
+  const handleAddVideoLink = () => {
+    const trimmed = videoUrlInput.trim();
+    if (!trimmed) return;
+    if (!/^https?:\/\/.+/i.test(trimmed)) {
+      setStatusMsg({
+        type: 'err',
+        text: 'Please enter a valid video URL starting with https:// or http://',
+      });
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      galleryVideos: [...f.galleryVideos, trimmed].slice(0, 6),
+    }));
+    setVideoUrlInput('');
+    setStatusMsg(null);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -125,6 +150,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
           description: form.description,
           coverImageUrl: form.coverImageUrl,
           galleryImages: form.galleryImages,
+          galleryVideos: form.galleryVideos,
           softwareUsed,
           printingTechnology: form.printingTechnology,
           projectDetails: form.projectDetails,
@@ -205,7 +231,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
             Portfolio Projects ({projects.length})
           </h2>
           <p className="text-sm text-[#6B7280]">
-            Add, edit, upload images, reorder, and control published visibility.
+            Add, edit, upload images and videos, reorder, and control published visibility.
           </p>
         </div>
 
@@ -366,7 +392,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               <FileUploader
                 mode="image"
                 folderPath={activeStorageFolder}
-                label="Cover Image (Recommended 4:3 or 16:10)"
+                label="Cover Image (Optional if uploading video — Recommended 4:3 or 16:10)"
                 currentUrl={form.coverImageUrl}
                 onUploaded={(url) => setForm((f) => ({ ...f, coverImageUrl: url }))}
               />
@@ -410,6 +436,74 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                           }
                           aria-label="Remove gallery image"
                           className="absolute top-1.5 right-1.5 w-6 h-6 rounded-md bg-white/90 text-red-700 flex items-center justify-center border border-[#E5E7EB] cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Project Videos Upload & Link Section */}
+              <div className="pt-4 border-t border-[#E5E7EB] space-y-3">
+                <FileUploader
+                  mode="video"
+                  folderPath={activeStorageFolder}
+                  label={`Add Portfolio Videos (${form.galleryVideos.length}/6 — MP4, WebM, MOV)`}
+                  currentUrl=""
+                  allowManualUrl={false}
+                  onUploaded={(url) => {
+                    if (!url) return;
+                    setForm((f) => ({
+                      ...f,
+                      galleryVideos: [...f.galleryVideos, url].slice(0, 6),
+                    }));
+                  }}
+                />
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="url"
+                    value={videoUrlInput}
+                    onChange={(e) => setVideoUrlInput(e.target.value)}
+                    placeholder="Or paste video link (Direct MP4/WebM, YouTube, or Vimeo URL)"
+                    className="flex-1 min-w-[220px] px-3 py-2 text-xs bg-white border border-[#E5E7EB] rounded-lg focus:outline-none focus:border-[#315E9B]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddVideoLink}
+                    disabled={form.galleryVideos.length >= 6 || !videoUrlInput.trim()}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#202124] bg-white hover:bg-[#E5E7EB]/50 border border-[#E5E7EB] rounded-lg disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  >
+                    <Link2 className="w-3.5 h-3.5 text-[#315E9B]" />
+                    <span>Add Video Link</span>
+                  </button>
+                </div>
+
+                {form.galleryVideos.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    {form.galleryVideos.map((vidUrl, idx) => (
+                      <div
+                        key={`${vidUrl}-${idx}`}
+                        className="relative overflow-hidden aspect-video rounded-lg bg-[#111827]"
+                      >
+                        <MediaVideo
+                          src={vidUrl}
+                          title={`Project video ${idx + 1}`}
+                          controls
+                          className="w-full h-full object-contain bg-[#111827]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((f) => ({
+                              ...f,
+                              galleryVideos: f.galleryVideos.filter((_, i) => i !== idx),
+                            }))
+                          }
+                          aria-label="Remove project video"
+                          className="absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-white/95 text-red-700 flex items-center justify-center border border-[#E5E7EB] cursor-pointer shadow-xs"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -498,83 +592,106 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {projects.map((p, idx) => (
-            <div
-              key={p.id}
-              className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-20 h-14 overflow-hidden shrink-0">
-                  {p.coverImageUrl ? (
-                    <img
-                      src={p.coverImageUrl}
-                      alt={p.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ProjectPlaceholderVisual categoryName={p.categoryName} compact />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-[#6B7280] truncate">
-                    {p.categoryName} ·{' '}
-                    <span className={p.published ? 'text-emerald-700 font-medium' : 'text-amber-700 font-medium'}>
-                      {p.published ? 'Published' : 'Draft'}
-                    </span>
-                  </p>
-                  <h4 className="font-display text-sm font-bold text-[#202124] truncate">
-                    {p.title}
-                  </h4>
-                </div>
-              </div>
+          {projects.map((p, idx) => {
+            const thumbImg = p.coverImageUrl || p.galleryImages?.[0] || '';
+            const thumbVideo = p.galleryVideos?.[0] || '';
+            const videoCount = p.galleryVideos?.length || 0;
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleReorder(idx, -1)}
-                  disabled={idx === 0}
-                  title="Move up"
-                  className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#202124] disabled:opacity-40 cursor-pointer"
-                >
-                  <ArrowUp className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleReorder(idx, 1)}
-                  disabled={idx === projects.length - 1}
-                  title="Move down"
-                  className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#202124] disabled:opacity-40 cursor-pointer"
-                >
-                  <ArrowDown className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTogglePublished(p)}
-                  title={p.published ? 'Unpublish' : 'Publish'}
-                  className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#315E9B] cursor-pointer"
-                >
-                  {p.published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openEdit(p)}
-                  title="Edit project"
-                  className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#315E9B] cursor-pointer"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(p)}
-                  title="Delete project"
-                  className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-red-700 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+            return (
+              <div
+                key={p.id}
+                className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-20 h-14 overflow-hidden shrink-0">
+                    {thumbImg ? (
+                      <img
+                        src={thumbImg}
+                        alt={p.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : thumbVideo ? (
+                      <MediaVideo
+                        src={thumbVideo}
+                        title={p.title}
+                        thumbnailOnly
+                        className="w-full h-full object-cover bg-[#111827]"
+                      />
+                    ) : (
+                      <ProjectPlaceholderVisual categoryName={p.categoryName} compact />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#6B7280] truncate">
+                      {p.categoryName} ·{' '}
+                      <span
+                        className={
+                          p.published ? 'text-emerald-700 font-medium' : 'text-amber-700 font-medium'
+                        }
+                      >
+                        {p.published ? 'Published' : 'Draft'}
+                      </span>
+                      {videoCount > 0 && (
+                        <span>
+                          {' '}
+                          · {videoCount} {videoCount === 1 ? 'Video' : 'Videos'}
+                        </span>
+                      )}
+                    </p>
+                    <h4 className="font-display text-sm font-bold text-[#202124] truncate">
+                      {p.title}
+                    </h4>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(idx, -1)}
+                    disabled={idx === 0}
+                    title="Move up"
+                    className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#202124] disabled:opacity-40 cursor-pointer"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(idx, 1)}
+                    disabled={idx === projects.length - 1}
+                    title="Move down"
+                    className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#202124] disabled:opacity-40 cursor-pointer"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTogglePublished(p)}
+                    title={p.published ? 'Unpublish' : 'Publish'}
+                    className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#315E9B] cursor-pointer"
+                  >
+                    {p.published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(p)}
+                    title="Edit project"
+                    className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-[#315E9B] cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(p)}
+                    title="Delete project"
+                    className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:text-red-700 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

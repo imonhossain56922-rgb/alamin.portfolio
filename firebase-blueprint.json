@@ -123,6 +123,7 @@
         "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
         "coverImageUrl": { "type": "string", "maxLength": 950000 },
         "galleryImages": { "type": "array", "description": "Max 12 gallery image URLs" },
+        "galleryVideos": { "type": "array", "description": "Max 6 gallery video URLs or firestore-video references" },
         "softwareUsed": { "type": "array", "description": "Max 12 software names" },
         "printingTechnology": { "type": "string", "maxLength": 240 },
         "projectDetails": { "type": "string", "maxLength": 2000 },
@@ -133,6 +134,32 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "categoryId", "categoryName", "description", "galleryImages", "softwareUsed", "published", "displayOrder", "createdAt", "updatedAt"]
+    },
+    "VideoAsset": {
+      "title": "VideoAsset",
+      "description": "Uploaded portfolio video metadata for Firestore-backed playback when Storage bucket is unavailable.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "mimeType": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "totalBytes": { "type": "number" },
+        "chunkCount": { "type": "number" },
+        "isPublic": { "type": "boolean" },
+        "ownerUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "fileName", "mimeType", "totalBytes", "chunkCount", "isPublic", "ownerUid", "createdAt"]
+    },
+    "VideoAssetChunk": {
+      "title": "VideoAssetChunk",
+      "description": "Base64-encoded binary slice of an uploaded portfolio video.",
+      "type": "object",
+      "properties": {
+        "index": { "type": "number" },
+        "data": { "type": "string", "minLength": 1, "maxLength": 750000 }
+      },
+      "required": ["index", "data"]
     },
     "SiteSettings": {
       "title": "SiteSettings",
@@ -184,6 +211,14 @@
     "/projects/{projectId}": {
       "schema": { "$ref": "#/entities/Project" },
       "description": "Portfolio projects with publication visibility."
+    },
+    "/videoAssets/{videoId}": {
+      "schema": { "$ref": "#/entities/VideoAsset" },
+      "description": "Uploaded portfolio video metadata."
+    },
+    "/videoAssets/{videoId}/chunks/{chunkId}": {
+      "schema": { "$ref": "#/entities/VideoAssetChunk" },
+      "description": "Binary slices for uploaded portfolio videos."
     },
     "/settings/{settingId}": {
       "schema": { "$ref": "#/entities/SiteSettings" },

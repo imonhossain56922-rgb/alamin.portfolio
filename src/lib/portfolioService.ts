@@ -336,6 +336,7 @@ export async function saveProject(
     description: clampStr(project.description, 4000) || 'Project description.',
     coverImageUrl: clampStr(project.coverImageUrl, 950000),
     galleryImages: clampStringList(project.galleryImages, 12, 300000),
+    galleryVideos: clampStringList(project.galleryVideos ?? [], 6, 950000),
     softwareUsed: clampStringList(project.softwareUsed, 12, 120),
     printingTechnology: clampStr(project.printingTechnology, 240),
     projectDetails: clampStr(project.projectDetails, 2000),

@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowUpRight, FolderOpen } from 'lucide-react';
+import { ArrowUpRight, FolderOpen, Play } from 'lucide-react';
 import { CategoryItem, ProjectItem } from '../types/portfolio';
 import { placeholderProjects } from '../data/defaultData';
 import { ProjectPlaceholderVisual } from './ProjectPlaceholderVisual';
 import { ProjectModal } from './ProjectModal';
+import { MediaVideo } from './MediaVideo';
 
 interface PortfolioSectionProps {
   categories: CategoryItem[];
@@ -54,7 +55,8 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
 
           {!hasFirestoreProjects && (
             <p className="text-xs text-[#6B7280] bg-[#F7F8FA] border border-[#E5E7EB] rounded-lg px-3.5 py-2 self-start lg:self-auto">
-              Showing placeholder gallery slots until real project photos are uploaded in Admin CMS.
+              Showing placeholder gallery slots until real project photos or videos are uploaded in
+              Admin CMS.
             </p>
           )}
         </div>
@@ -125,6 +127,8 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {filteredProjects.map((project, index) => {
               const primaryImg = project.coverImageUrl || project.galleryImages?.[0] || '';
+              const primaryVideo = project.galleryVideos?.[0] || '';
+              const hasVideo = (project.galleryVideos?.length || 0) > 0;
               const isFeature = index === 0 && filteredProjects.length >= 3;
 
               return (
@@ -153,13 +157,40 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                     }`}
                   >
                     {primaryImg ? (
-                      <img
-                        src={primaryImg}
-                        alt={project.title}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                      />
+                      <>
+                        <img
+                          src={primaryImg}
+                          alt={project.title}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                        />
+                        {hasVideo && (
+                          <div
+                            aria-hidden="true"
+                            className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-[#202124]/80 text-white flex items-center justify-center shadow-sm"
+                          >
+                            <Play className="w-4 h-4 fill-current ml-0.5" />
+                          </div>
+                        )}
+                      </>
+                    ) : primaryVideo ? (
+                      <>
+                        <MediaVideo
+                          src={primaryVideo}
+                          title={project.title}
+                          thumbnailOnly
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300 bg-[#111827]"
+                        />
+                        <div
+                          aria-hidden="true"
+                          className="absolute inset-0 flex items-center justify-center bg-[#202124]/15 group-hover:bg-[#202124]/25 transition-colors pointer-events-none"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-white/95 text-[#315E9B] shadow-md flex items-center justify-center group-hover:scale-105 transition-transform">
+                            <Play className="w-5 h-5 fill-current ml-0.5" />
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <ProjectPlaceholderVisual categoryName={project.categoryName} compact />
                     )}
@@ -197,7 +228,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           'Design & Production'}
                       </p>
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#315E9B] whitespace-nowrap shrink-0">
-                        <span>View Project</span>
+                        <span>{hasVideo ? 'Watch & View' : 'View Project'}</span>
                         <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                       </span>
                     </div>

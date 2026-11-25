@@ -1,23 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize2, Play, X } from 'lucide-react';
 import { ProjectItem } from '../types/portfolio';
 import { ProjectPlaceholderVisual } from './ProjectPlaceholderVisual';
+import { MediaVideo } from './MediaVideo';
 
 interface ProjectModalProps {
   project: ProjectItem | null;
   onClose: () => void;
 }
 
+interface MediaGalleryItem {
+  type: 'image' | 'video';
+  url: string;
+}
+
 export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const images = React.useMemo(() => {
+  const mediaItems = React.useMemo<MediaGalleryItem[]>(() => {
     if (!project) return [];
-    const list: string[] = [];
-    if (project.coverImageUrl) list.push(project.coverImageUrl);
+    const list: MediaGalleryItem[] = [];
+    const seen = new Set<string>();
+
+    if (project.coverImageUrl) {
+      seen.add(`image:${project.coverImageUrl}`);
+      list.push({ type: 'image', url: project.coverImageUrl });
+    }
+    for (const url of project.galleryVideos || []) {
+      if (url && !seen.has(`video:${url}`)) {
+        seen.add(`video:${url}`);
+        list.push({ type: 'video', url });
+      }
+    }
     for (const url of project.galleryImages || []) {
-      if (url && !list.includes(url)) list.push(url);
+      if (url && !seen.has(`image:${url}`)) {
+        seen.add(`image:${url}`);
+        list.push({ type: 'image', url });
+      }
     }
     return list;
   }, [project]);
@@ -36,19 +56,19 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
         } else {
           onClose();
         }
-      } else if (e.key === 'ArrowRight' && images.length > 1) {
-        setActiveIndex((prev) => (prev + 1) % images.length);
-      } else if (e.key === 'ArrowLeft' && images.length > 1) {
-        setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+      } else if (e.key === 'ArrowRight' && mediaItems.length > 1) {
+        setActiveIndex((prev) => (prev + 1) % mediaItems.length);
+      } else if (e.key === 'ArrowLeft' && mediaItems.length > 1) {
+        setActiveIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [project, lightboxOpen, images.length, onClose]);
+  }, [project, lightboxOpen, mediaItems.length, onClose]);
 
   if (!project) return null;
 
-  const currentImage = images[activeIndex] || '';
+  const currentMedia = mediaItems[activeIndex] || null;
 
   return (
     <div
@@ -90,45 +110,56 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
         {/* Visual Showcase Area */}
         <div className="p-6 md:p-8 space-y-8">
           <div className="relative bg-[#F7F8FA] overflow-hidden aspect-[16/10]">
-            {currentImage ? (
-              <>
-                <img
-                  src={currentImage}
-                  alt={`${project.title} visual ${activeIndex + 1}`}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain bg-[#F7F8FA]"
+            {currentMedia ? (
+              currentMedia.type === 'video' ? (
+                <MediaVideo
+                  key={currentMedia.url}
+                  src={currentMedia.url}
+                  title={`${project.title} video ${activeIndex + 1}`}
+                  controls
+                  playsInline
+                  className="w-full h-full object-contain bg-[#111827]"
                 />
-                <button
-                  type="button"
-                  onClick={() => setLightboxOpen(true)}
-                  aria-label="Open fullscreen lightbox"
-                  className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#202124] bg-white/90 hover:bg-white border border-[#E5E7EB] rounded-lg shadow-xs transition-colors cursor-pointer"
-                >
-                  <Maximize2 className="w-3.5 h-3.5 text-[#315E9B]" />
-                  <span>Preview Fullscreen</span>
-                </button>
-              </>
+              ) : (
+                <>
+                  <img
+                    src={currentMedia.url}
+                    alt={`${project.title} visual ${activeIndex + 1}`}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain bg-[#F7F8FA]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    aria-label="Open fullscreen lightbox"
+                    className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#202124] bg-white/90 hover:bg-white border border-[#E5E7EB] rounded-lg shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5 text-[#315E9B]" />
+                    <span>Preview Fullscreen</span>
+                  </button>
+                </>
+              )
             ) : (
               <ProjectPlaceholderVisual categoryName={project.categoryName} title={project.title} />
             )}
 
-            {images.length > 1 && (
+            {mediaItems.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={() =>
-                    setActiveIndex((prev) => (prev - 1 + images.length) % images.length)
+                    setActiveIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length)
                   }
-                  aria-label="Previous image"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-[#E5E7EB] flex items-center justify-center text-[#202124] shadow-xs transition-colors cursor-pointer"
+                  aria-label="Previous media item"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-[#E5E7EB] flex items-center justify-center text-[#202124] shadow-xs transition-colors cursor-pointer z-10"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveIndex((prev) => (prev + 1) % images.length)}
-                  aria-label="Next image"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-[#E5E7EB] flex items-center justify-center text-[#202124] shadow-xs transition-colors cursor-pointer"
+                  onClick={() => setActiveIndex((prev) => (prev + 1) % mediaItems.length)}
+                  aria-label="Next media item"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-[#E5E7EB] flex items-center justify-center text-[#202124] shadow-xs transition-colors cursor-pointer z-10"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -136,26 +167,48 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
             )}
           </div>
 
-          {/* Thumbnail Strip for Multi-Image Gallery */}
-          {images.length > 1 && (
+          {/* Thumbnail Strip for Multi-Media Gallery */}
+          {mediaItems.length > 1 && (
             <div className="flex items-center gap-3 overflow-x-auto pb-1">
-              {images.map((url, idx) => (
+              {mediaItems.map((item, idx) => (
                 <button
-                  key={`${url}-${idx}`}
+                  key={`${item.type}-${item.url}-${idx}`}
                   type="button"
                   onClick={() => setActiveIndex(idx)}
+                  aria-label={
+                    item.type === 'video' ? `Play video ${idx + 1}` : `View image ${idx + 1}`
+                  }
                   className={`relative w-20 h-14 overflow-hidden transition-all shrink-0 cursor-pointer pb-0.5 ${
                     idx === activeIndex
                       ? 'opacity-100 border-b-2 border-[#315E9B]'
                       : 'opacity-65 hover:opacity-100'
                   }`}
                 >
-                  <img
-                    src={url}
-                    alt={`${project.title} thumbnail ${idx + 1}`}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                  />
+                  {item.type === 'video' ? (
+                    <>
+                      <MediaVideo
+                        src={item.url}
+                        title={`${project.title} video thumbnail ${idx + 1}`}
+                        thumbnailOnly
+                        className="w-full h-full object-cover bg-[#111827]"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 flex items-center justify-center bg-[#202124]/25"
+                      >
+                        <span className="w-6 h-6 rounded-full bg-white/95 text-[#315E9B] flex items-center justify-center shadow-xs">
+                          <Play className="w-3 h-3 fill-current ml-0.5" />
+                        </span>
+                      </span>
+                    </>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={`${project.title} thumbnail ${idx + 1}`}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </button>
               ))}
             </div>
@@ -224,8 +277,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
         </div>
       </div>
 
-      {/* Fullscreen Lightbox */}
-      {lightboxOpen && currentImage && (
+      {/* Fullscreen Lightbox (Images) */}
+      {lightboxOpen && currentMedia?.type === 'image' && (
         <div
           className="fixed inset-0 z-[60] bg-[#202124]/95 flex items-center justify-center p-4"
           onClick={(e) => {
@@ -246,7 +299,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
           </button>
 
           <img
-            src={currentImage}
+            src={currentMedia.url}
             alt={`${project.title} fullscreen`}
             referrerPolicy="no-referrer"
             onClick={(e) => e.stopPropagation()}
